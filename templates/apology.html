@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Apology
+{% endblock %}
+
+{% block main %}
+<div class="page-center">
+    <p class="text-center">Error: {{ message }}.<br> Go <a href="javascript:history.back()">back</a></p>
+</div>
+{% endblock %}

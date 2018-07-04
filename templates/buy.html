@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Buy
+{% endblock %}
+
+{% block main %}
+<div class="page-center">
+  <form action="/buy" method="post">
+      <div class="form-group">
+          <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock Symbol (i.e. AAPL)" type="text"/>
+      </div>
+      <div class="form-group">
+          <input autocomplete="off" autofocus class="form-control" name="shares" placeholder="Shares" type="number"/>
+      </div>
+      <button class="btn btn-success" type="submit">Buy</button>
+  </form>
+</div>
+
+{% if stock %}
+<div class="text-center my-5">
+    <p>You've purchased {{shares}} share(s) of {{stock['symbol']}} for {{total}}</p>
+    <p>You have {{balance}} left.</p>
+</div>
+{% endif %}
+
+{% if message %}
+<div class="text-center my-5">
+    <p>{{ message }}.</p>
+</div>
+{% endif %}
+
+{% endblock %}

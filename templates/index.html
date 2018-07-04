@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home
+{% endblock %}
+
+{% block main %}
+<h1 class="my-4">My Portfolio</h1>
+<table class="table table-striped" style="width:100%">
+    <tr>
+        <th>Symbol</th>
+        <th>Shares</th>
+        <th>Current Price</th>
+        <th>TOTAL</th>
+        <th>Growth</th>
+    </tr>
+
+    {% for stock in stocks %}
+    <tr>
+        <td>{{ stock['symbol'] }}</td>
+        <td>{{ stock['shares'] }}</td>
+        <td>{{ stock['price'] }}</td>
+        <td>{{ stock['total'] }}</td>
+        <td {% if stock['growth']>0 %} style="color:green" {% endif %}{% if stock['growth']<0 %} style="color:red" {% endif %}>
+            {{ stock['pChange'] }}
+        </td>
+    </tr>
+    {% endfor %}
+
+    <tr>
+        <th>Balance:</td>
+        <td></td>
+        <td></td>
+        <td>{{ balance }}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><strong>{{ total }}</strong></td>
+        <td></td>
+    </tr>
+</table>
+{% endblock %}
