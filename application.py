@@ -73,58 +73,67 @@ Credit to Harvard's CS50 pset7
 @login_required
 def index():
 
-    # Create a table to keep track of stocks
+    # Create a table to keep track of portfolio
     db = connection.cursor()
-    db.execute("CREATE TABLE IF NOT EXISTS 'portfolio' ('id' INTEGER NOT NULL, 'symbol' TEXT NOT NULL, 'shares' INTEGER NOT NULL, 'total' NUMERIC NOT NULL)")
+    db.execute("CREATE TABLE IF NOT EXISTS 'portfolio' ('id' INTEGER NOT NULL, 'symbol' TEXT NOT NULL, 'shares' INTEGER NOT NULL, 'current_price' NUMERIC NOT NULL, 'total' NUMERIC NOT NULL)")
     connection.commit()
 
     # Get symbols
-    db.execute("SELECT symbol,shares,total FROM portfolio WHERE id = ?", (session["user_id"],))
-    symbols=db.fetchall()
-    size=len(symbols)
-    print()
-    print(str(symbols))
+    db.execute("SELECT symbol, shares, current_price, total FROM portfolio WHERE id = ?", (session["user_id"],))
+    portfolio=db.fetchall()
+    size=len(portfolio)
+
 
     # Create list of stocks
     stocks=[]
-    total=0.0
+    value=0.0
     for i in range(size):
-        getSymbol=lookup(symbols[i][0])
+
+        symbol=portfolio[i][0]
+        shares=portfolio[i][1]
+        price=portfolio[i][2]
+        total=portfolio[i][3]
+
+        # Check if symbol is recieved from API
         error=0
+        getSymbol=lookup(symbol)
         if not getSymbol:
             error=1
+
         if error==0:
-            pChange=(float(symbols[i][1])*getSymbol['price']-symbols[i][2])/symbols[i][2]
-            if pChange>0:
-                growth=1
-            elif pChange<0:
-                growth=-1
-            else:
-                growth=0
+            # Update current stock price if symbol is recieved
+            db.execute("UPDATE portfolio SET current_price=? WHERE id=? AND symbol=?", (getSymbol['price'], session["user_id"], symbol,))
+            connection.commit()
+            db.execute("SELECT current_price FROM portfolio WHERE id=? AND symbol=?", (session["user_id"], symbol,))
+            price=db.fetchone()[0]
 
-        print()
-        print(str(symbols[i][0]))
-        print(str(symbols[i][1]))
-        print(str(getSymbol))
+        # Calculate percent change
+        pChange=(float(shares)*price-total)/total
+        if pChange>0:
+            growth=1
+        elif pChange<0:
+            growth=-1
+        else:
+            growth=0
 
+        # Populate list
         stock={
-            "symbol": symbols[i][0],
-            "shares": symbols[i][1],
-            "price": getSymbol['price'] if error==0 else symbols[i][2]/symbols[i][1],
-            "total": float(symbols[i][1])*getSymbol['price'] if error==0 else symbols[i][2],
+            "symbol": symbol,
+            "shares": shares,
+            "price": price,
+            "total": float(shares)*price,
             "growth": growth if error==0 else 0,
             "pChange": percent(pChange) if error==0 else percent(0)
         }
-        total+=stock['total']
+        value+=stock['total']
         stocks.append(stock)
 
     # Get user balance
     db.execute("SELECT cash FROM users WHERE id = ?", (session["user_id"],))
-    row=db.fetchone()
-    balance=float(row[0])
-    total+=balance
+    balance=db.fetchone()[0]
+    value+=balance
 
-    return render_template("index.html", stocks=stocks, balance=usd(balance), total=usd(total))
+    return render_template("index.html", stocks=stocks, balance=usd(balance), total=usd(value))
 
 
 @app.route("/buy", methods=["GET", "POST"])
