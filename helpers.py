@@ -21,6 +21,9 @@ def apology_quote(message, code=400):
 def apology_buy(message, code=400):
     return render_template("buy.html", message=message, code=code), code
 
+def apology_sell(message, symbols, code=400):
+    return render_template("sell.html", symbols=symbols, message=message, code=code), code
+
 #Checks if user is logged in
 def login_required(f):
     @wraps(f)
@@ -72,14 +75,14 @@ def lookup(symbol):
 def usd(value):
     return f"${value:,.2f}"
 
-# Formats value as percents
+# Formats value as percent
 def percent(value):
     value*=100
     if value>0:
         value=abs(value)
-        return f"+{value:,.2f}%"
+        return f"{value:,.2f}%"
     elif value<0:
         value=abs(value)
         return f"-{value:,.2f}%"
     else:
-        return "0.0%"
+        return "0.00%"

@@ -1,5 +1,5 @@
 '''
-This is a Flask application
+This is a Flask application.
 API_KEY=REYK3P8B6YFO2GL6
 '''
 
@@ -66,20 +66,21 @@ for code in default_exceptions:
 
 '''
 End of starter code
-Credit to Harvard's CS50 pset7
+Credit to Harvard's CS50 Pset7
 '''
 
+# Route to portfolio page
 @app.route("/")
 @login_required
 def index():
 
     # Create a table to keep track of portfolio
     db = connection.cursor()
-    db.execute("CREATE TABLE IF NOT EXISTS 'portfolio' ('id' INTEGER NOT NULL, 'symbol' TEXT NOT NULL, 'shares' INTEGER NOT NULL, 'current_price' NUMERIC NOT NULL, 'total' NUMERIC NOT NULL)")
+    db.execute("CREATE TABLE IF NOT EXISTS 'portfolio' ('id' INTEGER NOT NULL, 'symbol' TEXT NOT NULL, 'shares' INTEGER NOT NULL, 'current_price' NUMERIC NOT NULL, 'total' NUMERIC NOT NULL, 'original_total' NUMERIC NOT NULL)")
     connection.commit()
 
     # Get symbols
-    db.execute("SELECT symbol, shares, current_price, total FROM portfolio WHERE id = ?", (session["user_id"],))
+    db.execute("SELECT symbol, shares, current_price, total, original_total FROM portfolio WHERE id = ?", (session["user_id"],))
     portfolio=db.fetchall()
     size=len(portfolio)
 
@@ -93,6 +94,7 @@ def index():
         shares=portfolio[i][1]
         price=portfolio[i][2]
         total=portfolio[i][3]
+        oldTotal=portfolio[i][4]
 
         # Check if symbol is recieved from API
         error=0
@@ -101,14 +103,17 @@ def index():
             error=1
 
         if error==0:
-            # Update current stock price if symbol is recieved
+            # Update current stock price and total if symbol is recieved
             db.execute("UPDATE portfolio SET current_price=? WHERE id=? AND symbol=?", (getSymbol['price'], session["user_id"], symbol,))
             connection.commit()
             db.execute("SELECT current_price FROM portfolio WHERE id=? AND symbol=?", (session["user_id"], symbol,))
             price=db.fetchone()[0]
+            total=price*float(shares)
+            db.execute("UPDATE portfolio SET total=? WHERE id=? AND symbol=?", (total, session["user_id"], symbol,))
+            connection.commit()
 
         # Calculate percent change
-        pChange=(float(shares)*price-total)/total
+        pChange=(total-oldTotal)/oldTotal
         if pChange>0:
             growth=1
         elif pChange<0:
@@ -120,12 +125,12 @@ def index():
         stock={
             "symbol": symbol,
             "shares": shares,
-            "price": price,
-            "total": float(shares)*price,
-            "growth": growth if error==0 else 0,
-            "pChange": percent(pChange) if error==0 else percent(0)
+            "price": usd(price),
+            "total": usd(total),
+            "growth": growth,
+            "pChange": percent(pChange)
         }
-        value+=stock['total']
+        value+=total
         stocks.append(stock)
 
     # Get user balance
@@ -135,13 +140,13 @@ def index():
 
     return render_template("index.html", stocks=stocks, balance=usd(balance), total=usd(value))
 
-
+# Route to purchasing page
 @app.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
     if request.method == "POST":
 
-        # Ensure username was submitted
+        # Ensure symbol was submitted
         if not request.form.get("symbol"):
             return apology_buy("Please provide a valid stock symbol")
 
@@ -173,20 +178,24 @@ def buy():
 
         if symbol:
 
-            # If symbol already exists, update existing shares and total
+            # If symbol already exists, update existing shares and original and new total
             db.execute("SELECT shares FROM portfolio where id = ? AND symbol = ?", (session["user_id"], stock['symbol'],))
             shares=db.fetchone()
             shares=shares[0]+int(request.form.get("shares"))
             db.execute("SELECT total FROM portfolio where id = ? AND symbol = ?", (session["user_id"], stock['symbol'],))
-            totalValue=db.fetchone()
-            totalValue=totalValue[0]+total
-            db.execute("UPDATE portfolio SET shares=?, total=? WHERE id=? AND symbol=?", (shares, totalValue, session["user_id"], stock['symbol'],))
+            totalValue=db.fetchone()[0]
+            totalValue+=total
+            db.execute("UPDATE portfolio SET shares=?, current_price=?, total=? WHERE id=? AND symbol=?", (shares, stock['price'], totalValue, session["user_id"], stock['symbol'],))
             connection.commit()
+            db.execute("SELECT original_total FROM portfolio where id = ? AND symbol = ?", (session["user_id"], stock['symbol'],))
+            totalValue=db.fetchone()[0]
+            totalValue+=total
+            db.execute("UPDATE portfolio SET original_total=? WHERE id=? AND symbol=?", (totalValue, session["user_id"], stock['symbol'],))
 
         else:
 
             # If symbol is new, insert new row
-            db.execute("INSERT INTO portfolio (id, symbol, shares, total) VALUES(?, ?, ?, ?)", (session["user_id"], stock['symbol'], int(request.form.get("shares")), total,))
+            db.execute("INSERT INTO portfolio (id, symbol, shares, current_price, total, original_total) VALUES(?, ?, ?, ?, ?, ?)", (session["user_id"], stock['symbol'], int(request.form.get("shares")), stock['price'], total, total))
             connection.commit()
 
         # Update balance
@@ -199,20 +208,24 @@ def buy():
     else:
         return render_template("buy.html")
 
-
+# Route to transaction history page
 @app.route("/history")
 @login_required
 def history():
-    return apology("TODO")
+    return apology("Unavailable")
 
-
+# Route to login page
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
+    # Check if already logged in
+    if not session.get("user_id") is None:
+        return redirect("/")
 
     # Forget any user_id
     session.clear()
 
-    # User reached route via POST (as by submitting a form via POST)
+    # User reached route via POST
     if request.method == "POST":
 
         # Ensure username was submitted
@@ -224,7 +237,6 @@ def login():
             return apology_login("Please provide a password", 403)
 
         # Query database for username
-        db = connection.cursor()
         db.execute("SELECT * FROM users WHERE username = ?", (request.form.get("username"),))
 
         # Ensure username exists and password is correct
@@ -242,7 +254,7 @@ def login():
     else:
         return render_template("login.html")
 
-
+# Log out
 @app.route("/logout")
 def logout():
 
@@ -252,13 +264,15 @@ def logout():
     # Redirect user to login form
     return redirect("/")
 
-
+# Route to stock quote page
 @app.route("/quote", methods=["GET", "POST"])
 @login_required
 def quote():
 
+    # User reached route via POST
     if request.method == "POST":
-        # Ensure username was submitted
+
+        # Ensure symbol was submitted
         if not request.form.get("symbol"):
             return apology_quote("Please provide a valid stock symbol")
 
@@ -272,10 +286,13 @@ def quote():
     else:
         return render_template("quote.html")
 
+# Route to register page
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
+    # User reached route via POST
     if request.method == "POST":
+
         # Ensure username was submitted
         if not request.form.get("username"):
             return apology_register("Please provide a valid username")
@@ -311,11 +328,72 @@ def register():
     else:
         return render_template("register.html")
 
-
+# Route to selling page
 @app.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
-    return render_template("sell.html")
+
+    db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
+    symbols=db.fetchall()
+
+    # User reached route via POST
+    if request.method == "POST":
+
+        # Ensure symbol was submitted
+        if not request.form.get("symbol"):
+            return apology_sell("Please provide a valid stock symbol", symbols=symbols)
+
+        #Ensure number of shares was submitted
+        elif not request.form.get("shares"):
+            return apology_sell("Please provide a number of shares", symbols=symbols)
+        elif not int(request.form.get("shares"))>0:
+            return apology_sell("Please provide a valid number of shares", symbols=symbols)
+
+        # Get user's shares of stock
+        db.execute("SELECT shares FROM portfolio WHERE id = ? AND symbol = ?", (session["user_id"], request.form.get("symbol"),))
+        shares=db.fetchone()[0]
+
+        # Check for enough shares
+        if shares-int(request.form.get("shares"))<0:
+            return apology_sell("Can't sell more shares than you own", symbols=symbols)
+
+        # Ensure symbol is valid
+        stock = lookup(request.form.get("symbol"))
+        if not stock:
+            return apology_sell("Invalid stock symbol", symbols=symbols)
+
+        # Update user balance
+        db.execute("SELECT cash FROM users WHERE id = ?", (session["user_id"],))
+        balance=db.fetchone()[0]
+        total=stock['price']*float(request.form.get("shares"))
+        balance+=total
+        db.execute("UPDATE users SET cash=? WHERE id=?",(balance, session["user_id"],))
+        connection.commit()
+
+        # Update user shares
+        if shares-int(request.form.get("shares"))==0:
+
+            # If all shares are sold, delete row
+            db.execute("DELETE FROM portfolio WHERE id=? AND symbol=?", (session["user_id"], request.form.get("symbol"),))
+            connection.commit()
+
+        else:
+
+            # Otherwise, subtract shares and update total
+            db.execute("SELECT total,original_total FROM portfolio WHERE id=? AND symbol=?", (session["user_id"], request.form.get("symbol"),))
+            stockTotal=db.fetchall()
+            newTotal=stockTotal[0][0]-total
+            oldTotal=stockTotal[0][1]-total
+            db.execute("UPDATE portfolio SET shares=?,total=?,original_total=? WHERE id=? AND symbol=?", (shares-int(request.form.get("shares")), newTotal, oldTotal, session["user_id"], request.form.get("symbol"),))
+            connection.commit()
+
+        db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
+        symbols=db.fetchall()
+        return render_template("sell.html", symbols=symbols, total=usd(total), shares=request.form.get("shares"), symbol=request.form.get("symbol"), balance=usd(balance))
+
+    # User reached route via GET
+    else:
+        return render_template("sell.html", symbols=symbols)
 
 
 # Run flask program

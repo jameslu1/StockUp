@@ -10,6 +10,11 @@
       <div class="form-group">
           <select class="form-control" name="symbol">
             <option disabled selected value>Symbol</option>
+
+            {% for symbol in symbols %}
+            <option value="{{ symbol[0] }}">{{ symbol[0] }}</option>
+            {% endfor %}
+
           </select>
       </div>
       <div class="form-group">
@@ -18,5 +23,18 @@
       <button class="btn btn-success" type="submit">Sell</button>
   </form>
 </div>
+
+{% if total %}
+<div class="text-center my-5">
+    <p>You've sold {{ shares }} share(s) of {{ symbol }} for {{ total }}</p>
+    <p>You have {{balance}} left.</p>
+</div>
+{% endif %}
+
+{% if message %}
+<div class="text-center my-5">
+    <p>{{ message }}.</p>
+</div>
+{% endif %}
 
 {% endblock %}
