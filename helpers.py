@@ -1,3 +1,5 @@
+# Contains helper functions for flask application
+
 import csv
 import os
 import urllib.request
@@ -50,7 +52,10 @@ def lookup(symbol):
     try:
 
         # Get CSV file
-        url = f"https://www.alphavantage.co/query?apikey={os.getenv('API_KEY')}&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
+        # Use following code only if running flask from command line:
+        # url = f"https://www.alphavantage.co/query?apikey={os.getenv('API_KEY')}&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
+        # Otherwise, use next line
+        url = f"https://www.alphavantage.co/query?apikey=REYK3P8B6YFO2GL6&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
         webpage = urllib.request.urlopen(url)
         datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
         next(datareader)

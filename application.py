@@ -1,11 +1,8 @@
-'''
-This is a Flask application.
-API_KEY=REYK3P8B6YFO2GL6
-'''
+#API_KEY=REYK3P8B6YFO2GL6
 
 import os
 
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 
@@ -16,6 +13,12 @@ from helpers import *
 # import SQL
 import sqlite3
 
+'''
+# Ensure environment variable is set (applicable when running via command line)
+if not os.environ.get("API_KEY"):
+    raise RuntimeError("API_KEY not set")
+'''
+
 # connect to database
 connection = sqlite3.connect("database.db")
 db = connection.cursor()
@@ -23,10 +26,6 @@ db = connection.cursor()
 # initialize database
 db.execute("CREATE TABLE IF NOT EXISTS 'users' ('id' INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 'username' TEXT NOT NULL, 'hash' TEXT NOT NULL, 'cash' NUMERIC NOT NULL DEFAULT 10000.00 )")
 connection.commit()
-
-# Ensure environment variable is set
-if not os.environ.get("API_KEY"):
-    raise RuntimeError("API_KEY not set")
 
 # Configure application
 app = Flask(__name__)
@@ -90,6 +89,7 @@ def index():
     value=0.0
     for i in range(size):
 
+        # Declare variables
         symbol=portfolio[i][0]
         shares=portfolio[i][1]
         price=portfolio[i][2]
@@ -333,6 +333,7 @@ def register():
 @login_required
 def sell():
 
+    # Get stock symbols to sell
     db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
     symbols=db.fetchall()
 
@@ -386,7 +387,8 @@ def sell():
             oldTotal=stockTotal[0][1]-total
             db.execute("UPDATE portfolio SET shares=?,total=?,original_total=? WHERE id=? AND symbol=?", (shares-int(request.form.get("shares")), newTotal, oldTotal, session["user_id"], request.form.get("symbol"),))
             connection.commit()
-
+        
+        # Update template
         db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
         symbols=db.fetchall()
         return render_template("sell.html", symbols=symbols, total=usd(total), shares=request.form.get("shares"), symbol=request.form.get("symbol"), balance=usd(balance))
