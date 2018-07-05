@@ -52,9 +52,8 @@ def lookup(symbol):
     try:
 
         # Get CSV file
-        # Use following code only if running flask from command line:
-        # url = f"https://www.alphavantage.co/query?apikey={os.getenv('API_KEY')}&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
-        # Otherwise, use next line
+        # use the following code if app is executed on a command line
+        #url = f"https://www.alphavantage.co/query?apikey={os.getenv('API_KEY')}&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
         url = f"https://www.alphavantage.co/query?apikey=REYK3P8B6YFO2GL6&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
         webpage = urllib.request.urlopen(url)
         datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
@@ -75,6 +74,44 @@ def lookup(symbol):
 
     except:
         return None
+
+# Sort users using merge sort
+def sort_users(users):
+
+    if len(users)>1:
+        mid = len(users)//2
+        lefthalf = users[:mid]
+        righthalf = users[mid:]
+
+        sort_users(lefthalf)
+        sort_users(righthalf)
+
+        i=0
+        j=0
+        k=0
+        while i < len(lefthalf) and j < len(righthalf):
+            if lefthalf[i]['total'] > righthalf[j]['total']:
+                users[k]=lefthalf[i]
+                i+=1
+            else:
+                users[k]=righthalf[j]
+                j+=1
+            k+=1
+
+        while i < len(lefthalf):
+            users[k]=lefthalf[i]
+            i=i+1
+            k=k+1
+
+        while j < len(righthalf):
+            users[k]=righthalf[j]
+            j=j+1
+            k=k+1
+
+    return(users)
+
+def percent_change(a,b):
+    return float((a-b)/b)
 
 # Formats value as US Dollar
 def usd(value):

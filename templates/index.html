@@ -39,7 +39,9 @@
         <td></td>
         <td></td>
         <td><strong>{{ total }}</strong></td>
-        <td></td>
+        <td {% if totalGrowth>0 %} style="color:green" {% endif %}{% if totalGrowth<0 %} style="color:red" {% endif %}>
+            <strong>{{ totalChange }}</strong>
+        </td>
     </tr>
 </table>
 {% endblock %}

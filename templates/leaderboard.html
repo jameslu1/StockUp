@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Leaderboards
+{% endblock %}
+
+{% block main %}
+<h1 class="my-4">My Portfolio</h1>
+<table class="table table-striped" style="width:100%">
+    <tr>
+        <th>Ranking</th>
+        <th>User</th>
+        <th>Total</th>
+        <th>Growth</th>
+    </tr>
+
+    {% for user in users %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ user['username'] }}</td>
+        <td>{{ user['usd_total'] }}</td>
+        <td {% if user['growth']>0 %} style="color:green;" {% endif %}{% if user['growth']<0 %} style="color:red;" {% endif %}>
+            {{ user['change'] }}
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+{% endblock %}

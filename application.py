@@ -89,7 +89,6 @@ def index():
     value=0.0
     for i in range(size):
 
-        # Declare variables
         symbol=portfolio[i][0]
         shares=portfolio[i][1]
         price=portfolio[i][2]
@@ -113,7 +112,7 @@ def index():
             connection.commit()
 
         # Calculate percent change
-        pChange=(total-oldTotal)/oldTotal
+        pChange=percent_change(total, oldTotal)
         if pChange>0:
             growth=1
         elif pChange<0:
@@ -138,7 +137,16 @@ def index():
     balance=db.fetchone()[0]
     value+=balance
 
-    return render_template("index.html", stocks=stocks, balance=usd(balance), total=usd(value))
+    # Calculate total percent change
+    totalChange=percent_change(value, 10000)
+    if totalChange>0:
+        totalGrowth=1
+    elif totalChange<0:
+        totalGrowth=-1
+    else:
+        totalGrowth=0
+
+    return render_template("index.html", stocks=stocks, balance=usd(balance), total=usd(value), totalChange=percent(totalChange), totalGrowth=totalGrowth)
 
 # Route to purchasing page
 @app.route("/buy", methods=["GET", "POST"])
@@ -208,11 +216,52 @@ def buy():
     else:
         return render_template("buy.html")
 
-# Route to transaction history page
-@app.route("/history")
+# Route to leaderboard page
+@app.route("/leaderboard")
 @login_required
-def history():
-    return apology("Unavailable")
+def leaderboard():
+
+    # Get all users
+    db.execute("SELECT id,username,cash FROM users")
+    userList=db.fetchall()
+    numberOfUsers=len(userList)
+
+    # Create a list of user info
+    users=[]
+    for n in range(numberOfUsers):
+        user_id=userList[n][0]
+        username=userList[n][1]
+        cash=userList[n][2]
+
+        # Get total value of users stocks and balance
+        db.execute("SELECT total FROM portfolio where id=?", (user_id,))
+        totalList=db.fetchall()
+        total=0
+        for i in totalList:
+            total+=i[0]
+        total+= cash
+
+        # Calculate percent change
+        change=percent_change(total, 10000)
+        if change>0:
+            totalGrowth=1
+        elif change<0:
+            totalGrowth=-1
+        else:
+            totalGrowth=0
+
+        # Create list of user info
+        user= {
+            "id": user_id,
+            "username": username,
+            "total": total,
+            "usd_total": usd(total),
+            "change": percent(change),
+            "growth": totalGrowth
+        }
+        users.append(user)
+    sort_users(users)
+    return render_template("leaderboard.html", users=users)
 
 # Route to login page
 @app.route("/login", methods=["GET", "POST"])
@@ -333,7 +382,6 @@ def register():
 @login_required
 def sell():
 
-    # Get stock symbols to sell
     db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
     symbols=db.fetchall()
 
@@ -387,8 +435,7 @@ def sell():
             oldTotal=stockTotal[0][1]-total
             db.execute("UPDATE portfolio SET shares=?,total=?,original_total=? WHERE id=? AND symbol=?", (shares-int(request.form.get("shares")), newTotal, oldTotal, session["user_id"], request.form.get("symbol"),))
             connection.commit()
-        
-        # Update template
+
         db.execute("SELECT symbol total FROM portfolio WHERE id = ?", (session["user_id"],))
         symbols=db.fetchall()
         return render_template("sell.html", symbols=symbols, total=usd(total), shares=request.form.get("shares"), symbol=request.form.get("symbol"), balance=usd(balance))
