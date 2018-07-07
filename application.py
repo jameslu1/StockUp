@@ -102,11 +102,10 @@ def index():
             error=1
 
         if error==0:
-            # Update current stock price and total if symbol is recieved
-            db.execute("UPDATE portfolio SET current_price=? WHERE id=? AND symbol=?", (getSymbol['price'], session["user_id"], symbol,))
+            # Update current stock price and totals for all users if symbol is recieved
+            price=getSymbol['price']
+            db.execute("UPDATE portfolio SET current_price=? WHERE symbol=?", (price, symbol,))
             connection.commit()
-            db.execute("SELECT current_price FROM portfolio WHERE id=? AND symbol=?", (session["user_id"], symbol,))
-            price=db.fetchone()[0]
             total=price*float(shares)
             db.execute("UPDATE portfolio SET total=? WHERE id=? AND symbol=?", (total, session["user_id"], symbol,))
             connection.commit()
