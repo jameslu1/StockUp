@@ -13,11 +13,9 @@ from helpers import *
 # import SQL
 import sqlite3
 
-'''
 # Ensure environment variable is set (applicable when running via command line)
 if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
-'''
 
 # connect to database
 connection = sqlite3.connect("database.db")

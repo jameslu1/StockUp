@@ -54,7 +54,7 @@ def lookup(symbol):
         # Get CSV file
         # use the following code if app is executed on a command line
         #url = f"https://www.alphavantage.co/query?apikey={os.getenv('API_KEY')}&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
-        url = f"https://www.alphavantage.co/query?apikey=REYK3P8B6YFO2GL6&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol={symbol}"
+        url = "https://www.alphavantage.co/query?apikey="+str(os.getenv('API_KEY'))+"&datatype=csv&function=TIME_SERIES_INTRADAY&interval=1min&symbol="+str(symbol)
         webpage = urllib.request.urlopen(url)
         datareader = csv.reader(webpage.read().decode("utf-8").splitlines())
         next(datareader)
@@ -115,16 +115,16 @@ def percent_change(a,b):
 
 # Formats value as US Dollar
 def usd(value):
-    return f"${value:,.2f}"
+    return "$"+str(round(value, 2))
 
 # Formats value as percent
 def percent(value):
     value*=100
     if value>0:
         value=abs(value)
-        return f"{value:,.2f}%"
+        return str(round(value, 2))+"%"
     elif value<0:
         value=abs(value)
-        return f"-{value:,.2f}%"
+        return "-"+str(round(value, 2))+"%"
     else:
         return "0.00%"
