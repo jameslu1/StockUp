@@ -5,43 +5,40 @@
 {% endblock %}
 
 {% block main %}
-<h1 class="my-4">My Portfolio</h1>
-<table class="table table-striped" style="width:100%">
-    <tr>
-        <th>Symbol</th>
-        <th>Shares</th>
-        <th>Current Price</th>
-        <th>TOTAL</th>
-        <th>Growth</th>
-    </tr>
+    <div class="row my-4 border">
+        <div class="col-md-4 mt-3">
+            <h1>My Portfolio</h1>
+        </div>
+        <div class="col-md-4 mt-4">
+            <p>Balance: {{ balance }}</p>
+        </div>
+        <div class="col-md-4 mt-2">
+            <p><strong>Total: {{ total }}</strong>
+            <br>
+                Portfolio Growth:
+                <strong {% if totalGrowth>0 %} style="color:green" {% endif %}{% if totalGrowth<0 %} style="color:red" {% endif %}>{{ totalChange }}</strong>
+            </p>
+        </div>
+    </div>
+    <div class=row>
+        {% if stocks==[] %}
+        <div class="col-md-4 text-left bg-light">
+            <p>You don't have anything in your portfolio yet!</p>
+            <p>You can check prices of stocks <a href="/quote">here</a>.</p>
+            <p>You can buy your first shares <a href="/buy">here</a>.</p>
+        </div>
+        {% endif %}
+        {% for stock in stocks %}
+        <div class="col-md-4 text-left {% if loop.index%2==1 %}bg-light{% endif %}">
+            <p class="text-center"><a href="https://www.google.com/search?q={{ stock['symbol'] }}+stock" target="_blank">{{ stock['symbol'] }}</a></p>
+            <p>Shares: {{ stock['shares'] }}</p>
+            <p>Current Price: {{ stock['price'] }}</p>
+            <p>Total Value: {{ stock['total'] }}</p>
+            <p class="text-center" {% if stock['growth']>0 %} style="color:green" {% endif %}{% if stock['growth']<0 %} style="color:red" {% endif %}>
+                {{ stock['pChange'] }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
 
-    {% for stock in stocks %}
-    <tr>
-        <td>{{ stock['symbol'] }}</td>
-        <td>{{ stock['shares'] }}</td>
-        <td>{{ stock['price'] }}</td>
-        <td>{{ stock['total'] }}</td>
-        <td {% if stock['growth']>0 %} style="color:green" {% endif %}{% if stock['growth']<0 %} style="color:red" {% endif %}>
-            {{ stock['pChange'] }}
-        </td>
-    </tr>
-    {% endfor %}
-
-    <tr>
-        <th>Balance:</td>
-        <td></td>
-        <td></td>
-        <td>{{ balance }}</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td><strong>{{ total }}</strong></td>
-        <td {% if totalGrowth>0 %} style="color:green" {% endif %}{% if totalGrowth<0 %} style="color:red" {% endif %}>
-            <strong>{{ totalChange }}</strong>
-        </td>
-    </tr>
-</table>
 {% endblock %}

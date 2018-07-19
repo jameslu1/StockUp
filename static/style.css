@@ -37,6 +37,10 @@ main img
     color: #2e944b;
 }
 
+h1, h2, h3, p, a, tr {
+    font-family: Montserrat;
+}
+
 .background-img {
     background: linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url(https://media.zenfs.com/creatr-images/GLB/2018-04-06/7af02fc0-39c2-11e8-b557-2be9e8dd9eba_nyse-wide-shot.jpg) no-repeat center center fixed;
     background-size: cover;

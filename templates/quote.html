@@ -8,14 +8,14 @@
 <div class="page-center">
   <form action="/quote" method="post">
       <div class="form-group">
-          <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock Symbol (i.e. AAPL)" type="text"/>
+          <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Stock Symbol (i.e. AAPL)" type="text">
       </div>
       <button class="btn btn-success" type="submit">Get Quote</button>
   </form>
 </div>
 {% if stock %}
 <div class="text-center my-5">
-    <p>A share of {{stock['symbol']}} costs {{value}}</p>
+    <p>A share of <a href="https://www.google.com/search?q={{ stock['symbol'] }}+stock" target="_blank">{{stock['symbol']}}</a> costs {{value}}</p>
 </div>
 {% endif %}
 

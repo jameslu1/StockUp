@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Leaderboards
+    Leaderboard
 {% endblock %}
 
 {% block main %}
 <h1 class="my-4">Leaderboard</h1>
-<table class="table table-striped" style="width:100%">
+<table class="table" style="width:100%">
     <tr>
         <th>Ranking</th>
         <th>User</th>
@@ -19,7 +19,7 @@
         <td>{{ loop.index }}</td>
         <td>{{ user['username'] }}</td>
         <td>{{ user['usd_total'] }}</td>
-        <td {% if user['growth']>0 %} style="color:green;" {% endif %}{% if user['growth']<0 %} style="color:red;" {% endif %}>
+        <td {% if user['growth']>=0 %} style="color:green;" {% endif %}{% if user['growth']<0 %} style="color:red;" {% endif %}>
             {{ user['change'] }}
         </td>
     </tr>
